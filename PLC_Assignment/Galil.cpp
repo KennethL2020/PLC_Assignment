@@ -203,6 +203,7 @@ void Galil::setSetPoint(int s){
 	printf("\n%s\n", buffer);
 	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 	if(CheckSuccessfulWrite())
+		printf("Success\n");
 		setPoint = s;
 }							// Set the desired setpoint for control loops, counts or counts/sec
 void Galil::setKp(double gain){
