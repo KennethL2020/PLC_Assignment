@@ -41,7 +41,7 @@ void Galil::DigitalByteOutput(bool bank, uint8_t value){
 void Galil::DigitalBitOutput(bool val, uint8_t bit){
 	char tmp [256];
 	GBufIn buffer = tmp;
-	sprintf((char *)buffer, "OP%d,%d;\r\n", bit, val);
+	sprintf((char *)buffer, "OB%d,%d;\r\n", bit, val);
 	GSize bufferLn = strlen(buffer);
 	printf("\n%s", buffer);
 	Functions->GWrite(g, buffer, bufferLn);
@@ -53,13 +53,14 @@ uint16_t Galil::DigitalInput() {
 	uint16_t result = 0;
 	char tmp[256];
 	GBufIn buffer = tmp;
-	char readBuffer[256];
+	char readBuffer[256] = {0};
 	GBufOut readBuf = readBuffer;
 	for (int i = 0; i < 16; i++) {
 		sprintf((char*)buffer, "MG @IN[%d];\r\n", i);
 		printf("\n%s", buffer);
-		Functions->GCommand(g, buffer, readBuf, 256, NULL);
-		result = result | (readBuf[0] << i);
+		GSize gsize;
+		Functions->GCommand(g, buffer, &readBuf[i], 256, &gsize);
+		result = result | (readBuf[i] << i);
 	}
 	
 	return result; 
@@ -104,7 +105,7 @@ bool Galil::CheckSuccessfulWrite(){
 	char readBuffer[8];
 	GBufOut readBuf = readBuffer;
 	Functions->GRead(g, readBuf, 8, NULL);
-	if (readBuf[0] != '?') {
+	if (readBuf[0] == '?') {
 		return false;
 	}
 	return true; 
