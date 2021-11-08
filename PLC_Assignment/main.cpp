@@ -36,19 +36,31 @@ int main() {
 			galil.AnalogOutput(0, 5);
 			break;
 		case '0':
-
+			galil.AnalogInputRange(0, 1);
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case 'q':
+			galil.WriteEncoder();
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case 'w':
+			printf("%d\n", galil.ReadEncoder());
 			break;
 		case 'e':
+			galil.setSetPoint(5);
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case 'r':
+			galil.setKd(1);
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case 't':
+			galil.setKp(2);
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case 'y':
+			galil.setKi(3);
+			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		}
 	}
