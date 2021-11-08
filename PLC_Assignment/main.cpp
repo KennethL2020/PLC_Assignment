@@ -17,16 +17,17 @@ int main() {
 			galil.DigitalBitOutput(1, 7);
 			break;
 		case '4':
-			printf("%d\n", galil.DigitalInput());
+			printf("%u\n", galil.DigitalInput());
 			break;
 		case '5':
-			printf("%d\n", galil.DigitalByteInput(0));
+			printf("%u\n", galil.DigitalByteInput(0));
 			break;
 		case '6':
-			printf("%d\n", galil.DigitalBitInput(7));
+			printf("%u\n", galil.DigitalBitInput(7));
 			break;
 		case '7':
 			galil.DigitalBitOutput(1, 10);
+			galil.DigitalBitOutput(1, 0);
 			printf("%d\n", galil.CheckSuccessfulWrite());
 			break;
 		case '8':
