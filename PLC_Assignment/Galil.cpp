@@ -7,15 +7,15 @@
 
 using namespace System;
 Galil::Galil(){
-
+	Functions = new EmbeddedFunctions();
+	Functions->GOpen("192.168.0.120", &g);
 }												// Default constructor. Initialize variables, open Galil connection and allocate memory. NOT AUTOMARKED
 Galil::Galil(EmbeddedFunctions* Funcs, GCStringIn address){
-	Galil();
 	Functions = Funcs;
 	Functions->GOpen(address, &g);
 }	// Constructor with EmbeddedFunciton initialization
 Galil::~Galil(){
-	//Functions->GClose(&g);
+	Functions->GClose(&g);
 }												// Default destructor. Deallocate memory and close Galil connection. NOT AUTOMARKED
 
 // DIGITAL OUTPUTS
