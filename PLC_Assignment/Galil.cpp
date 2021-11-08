@@ -8,7 +8,7 @@
 using namespace System;
 Galil::Galil(){
 	Functions = new EmbeddedFunctions();
-	Functions->GOpen("192.168.0.120", &g);
+	Functions->GOpen("192.168.0.120 -d", &g);
 }												// Default constructor. Initialize variables, open Galil connection and allocate memory. NOT AUTOMARKED
 Galil::Galil(EmbeddedFunctions* Funcs, GCStringIn address){
 	Functions = Funcs;
@@ -20,17 +20,18 @@ Galil::~Galil(){
 
 // DIGITAL OUTPUTS
 void Galil::DigitalOutput(uint16_t value){
-	GBufIn buffer = value == 1 ? "OP255,255" : "OP0,0";
+	GBufIn buffer = (value == 1) ? "OP255,255;\r\n" : "OP0,0;\r\n";
 	GSize bufferLn = strlen(buffer);
+	printf("\n%s", buffer);
 	Functions->GWrite(g, buffer, bufferLn);
 }						// Write to all 16 bits of digital output, 1 command to the Galil
 void Galil::DigitalByteOutput(bool bank, uint8_t value){
 	GBufIn buffer;
 	if (bank) {
-		buffer = value == 1 ? "OP,255" : "OP,0";
+		buffer = (value == 1) ? "OP,255" : "OP,0";
 	}
 	else {
-		buffer = value == 1 ? "OP255" : "OP0";
+		buffer = (value == 1) ? "OP255" : "OP0";
 	}
 	GSize bufferLn = strlen(buffer);
 	Functions->GWrite(g, buffer, bufferLn);
