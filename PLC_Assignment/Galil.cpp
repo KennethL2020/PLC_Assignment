@@ -15,7 +15,7 @@ Galil::Galil(EmbeddedFunctions* Funcs, GCStringIn address){
 	Functions->GOpen(address, &g);
 }	// Constructor with EmbeddedFunciton initialization
 Galil::~Galil(){
-	Functions->GClose(&g);
+	//Functions->GClose(&g);
 }												// Default destructor. Deallocate memory and close Galil connection. NOT AUTOMARKED
 
 // DIGITAL OUTPUTS
