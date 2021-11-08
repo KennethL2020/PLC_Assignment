@@ -22,7 +22,7 @@ Galil::~Galil(){
 void Galil::DigitalOutput(uint16_t value){
 	GBufIn buffer = (value == 1) ? "OP255,255;" : "OP0,0;";
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
+	printf("\n%s\n", buffer);
 	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }						// Write to all 16 bits of digital output, 1 command to the Galil
 void Galil::DigitalByteOutput(bool bank, uint8_t value){
@@ -34,7 +34,7 @@ void Galil::DigitalByteOutput(bool bank, uint8_t value){
 		buffer = (value == 1) ? "OP255;" : "OP0;";
 	}
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
+	printf("\n%s\n", buffer);
 	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }		// Write to one byte, either high or low byte, as specified by user in 'bank'
 														// 0 = low, 1 = high
@@ -43,7 +43,7 @@ void Galil::DigitalBitOutput(bool val, uint8_t bit){
 	GBufIn buffer = tmp;
 	sprintf((char *)buffer, "OB%d,%d;", bit, val);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
+	printf("\n%s\n", buffer);
 	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }			// Write single bit to digital outputs. 'bit' specifies which bit
 
@@ -56,9 +56,9 @@ uint16_t Galil::DigitalInput() {
 	GBufOut readBuf = ReadBuffer;
 	for (int i = 0; i < 16; i++) {
 		sprintf((char*)buffer, "MG @IN[%d];", i);
-		printf("\n%s", buffer);
+		printf("\n%s\n", buffer);
 		GSize gsize;
-		Functions->GCommand(g, buffer, &readBuf[0], 256, &gsize);
+		Functions->GCommand(g, buffer, &readBuf[0], 1024, &gsize);
 		int j = 0;
 		while (1) {
 			if (readBuf[j] == '0' || readBuf[j] == '1')
@@ -84,8 +84,8 @@ uint8_t Galil::DigitalByteInput(bool bank){
 	
 	for (int i = start; i < start+8; i++) {
 		sprintf((char*)buffer, "MG @IN[%d];", i);
-		printf("\n%s", buffer);
-		Functions->GCommand(g, buffer, readBuf, 256, NULL);
+		printf("\n%s\n", buffer);
+		Functions->GCommand(g, buffer, readBuf, 1024, NULL);
 		int j = 0;
 		while (1) {
 			if (readBuf[j] == '0' || readBuf[j] == '1')
@@ -105,8 +105,8 @@ bool Galil::DigitalBitInput(uint8_t bit){
 	GBufIn buffer = tmp;
 	GBufOut readBuf = ReadBuffer;
 	sprintf((char*)buffer, "MG @IN[%d];", bit);
-	printf("\n%s", buffer);
-	Functions->GCommand(g, buffer, readBuf, 256, NULL);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, readBuf, 1024, NULL);
 	int i = 0;
 	while (1) {
 		if (readBuf[i] == '0' || readBuf[i] == '1')
@@ -133,24 +133,30 @@ bool Galil::CheckSuccessfulWrite(){
 float Galil::AnalogInput(uint8_t channel){ 
 	char tmp[256];
 	GBufIn buffer = tmp;
-	char readBuffer[sizeof(float)];
-	GBufOut readBuf = readBuffer;
+	GBufOut readBuf = ReadBuffer;
 	sprintf((char*)buffer, "MG @AN[%d];", channel);
-	printf("\n%s", buffer);
-	Functions->GCommand(g, buffer, readBuf, sizeof(float), NULL);
-	int result = 0;
-	for (int i = 0; i < sizeof(float); i++) {
-		result = result | (readBuf[i] << i*8);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, readBuf, 1024, NULL);
+	float result = 0;
+	
+	int j = 0;
+	while (1) {
+		if (readBuf[j] >= '0' && readBuf[j] <= '9')
+			break;
+		j++;
 	}
-	return (float)result; 
+	float val = atof(&readBuf[j]);
+	result = val;
+	
+	return result; 
 }						// Read Analog channel and return voltage			
 void Galil::AnalogOutput(uint8_t channel, double voltage){
 	char tmp[256];
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "AO%d,%.2lf;", channel, voltage);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }		// Write to any channel of the Galil, send voltages as
 														// 2 decimal place in the command string
 void Galil::AnalogInputRange(uint8_t channel, uint8_t range){
@@ -158,8 +164,8 @@ void Galil::AnalogInputRange(uint8_t channel, uint8_t range){
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "AQ%d,%d;", channel, range);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }	// Configure the range of the input channel with
 														// the desired range code
 
@@ -169,21 +175,24 @@ void Galil::WriteEncoder(){
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "WE%d,%d;", 0, 0);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
 }								// Manually Set the encoder value to zero
 int Galil::ReadEncoder(){ 
 	char tmp[256];
 	GBufIn buffer = tmp;
-	char readBuffer[sizeof(int)];
-	GBufOut readBuf = readBuffer;
+	GBufOut readBuf = ReadBuffer;
 	sprintf((char*)buffer, "QE %d;", 0);
-	printf("\n%s", buffer);
-	Functions->GCommand(g, buffer, readBuf, sizeof(int), NULL);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, readBuf, 1024, NULL);
 	int result = 0;
-	for (int i = 0; i < sizeof(int); i++) {
-		result = result | (readBuf[i] << i * 8);
+	int j = 0;
+	while (1) {
+		if (readBuf[j] >= '0' && readBuf[j] <= '9')
+			break;
+		j++;
 	}
+	result = atoi(&readBuf[j]);
 	return result; 
 }									// Read from Encoder
 void Galil::setSetPoint(int s){
@@ -191,32 +200,44 @@ void Galil::setSetPoint(int s){
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "PS %d;", s);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
+	if(CheckSuccessfulWrite())
+		setPoint = s;
 }							// Set the desired setpoint for control loops, counts or counts/sec
 void Galil::setKp(double gain){
 	char tmp[256];
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "KP %lf;", gain);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
+	if (CheckSuccessfulWrite())
+		printf("Success\n");
+		ControlParameters[0] = gain;
+
 }							// Set the proportional gain of the controller used in controlLoop()
 void Galil::setKi(double gain){
 	char tmp[256];
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "KI %lf;", gain);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
+	if (CheckSuccessfulWrite())
+		printf("Success\n");
+		ControlParameters[1] = gain;
 }							// Set the integral gain of the controller used in controlLoop()
 void Galil::setKd(double gain){
 	char tmp[256];
 	GBufIn buffer = tmp;
 	sprintf((char*)buffer, "KD %lf;", gain);
 	GSize bufferLn = strlen(buffer);
-	printf("\n%s", buffer);
-	Functions->GWrite(g, buffer, bufferLn);
+	printf("\n%s\n", buffer);
+	Functions->GCommand(g, buffer, ReadBuffer, 1024, NULL);
+	if (CheckSuccessfulWrite())
+		printf("Success\n");
+		ControlParameters[2] = gain;
 }							// Set the derivative gain of the controller used in controlLoop()
 //void Galil::PositionControl(bool debug, int Motorchannel){}	// Run the control loop. ReadEncoder() is the input to the loop. The motor is the output.
 													// The loop will run using the PID values specified in the data of this object, and has an 
